@@ -4,6 +4,7 @@ import pathlib
 from collections import namedtuple
 from enum import Enum
 from typing import Dict, List, Tuple
+import os 
 
 import bg_space as bg
 import brainreg as program_for_log
@@ -26,6 +27,7 @@ from napari.utils.notifications import show_info
 from brainreg_napari.util import (
     NiftyregArgs,
     downsample_and_save_brain,
+    downsample_and_save_brain_fast,
     initialise_brainreg,
 )
 
@@ -424,7 +426,8 @@ def brainreg_register():
 
             logging.info(f"Registering {img_layer._name}")
 
-            target_brain = downsample_and_save_brain(img_layer, scaling)
+            # target_brain = downsample_and_save_brain(img_layer, scaling)
+            target_brain = downsample_and_save_brain_fast(img_layer, scaling, os.cpu_count()-n_free_cpus)
             target_brain = bg.map_stack_to(
                 data_orientation, atlas.metadata["orientation"], target_brain
             )

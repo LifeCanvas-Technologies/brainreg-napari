@@ -7,6 +7,10 @@ import skimage.transform
 from bg_atlasapi import BrainGlobeAtlas
 from brainglobe_utils.general.system import get_num_processes
 from tqdm import tqdm
+import multiprocessing as mp
+from functools import partial 
+from scipy import ndimage as ndi 
+import glob, os 
 
 
 def initialise_brainreg(atlas_key, data_orientation_key, voxel_sizes):
@@ -67,6 +71,23 @@ def downsample_and_save_brain(img_layer, scaling):
         )
         downsampled_array[:, :, i] = down_xyz.T
     return downsampled_array
+
+def _resample_img_slice(img, scaling=(1,1)):
+    return ndi.zoom(img, scaling, order=1, mode='reflect')
+
+def downsample_brain_fast(img_layer, scaling, num_workers):
+    if not num_workers:
+        return downsample_and_save_brain(img_layer, scaling)
+    else:
+        z_dim = img_layer.data.shape[0]
+        zs = np.round(np.arange(0,z_dim,1/scaling[0])).astype('int')
+        imgs = [img_layer.data[z] for z in zs]
+        f = partial(_resample_img_slice, scaling = scaling[1:])
+        p = mp.Pool(num_workers)
+        final_img = list(tqdm(p.imap(f,imgs), total = len(imgs)))
+        p.close()
+        p.join()
+        return np.asarray(final_img)
 
 
 @dataclass
