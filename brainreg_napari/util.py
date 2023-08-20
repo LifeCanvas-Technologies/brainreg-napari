@@ -79,14 +79,41 @@ def downsample_brain_fast(img_layer, scaling, num_workers):
     if not num_workers:
         return downsample_and_save_brain(img_layer, scaling)
     else:
+        ## Method 1: subsampling in z
+        # z_dim = img_layer.data.shape[0]
+        # zs = np.round(np.arange(0,z_dim,1/scaling[0])).astype('int')
+        # imgs = [img_layer.data[z] for z in zs]
+        # f = partial(_resample_img_slice, scaling = scaling[1:])
+        # p = mp.Pool(num_workers)
+        # final_img = list(tqdm(p.imap(f,imgs), total = len(imgs)))
+        # p.close()
+        # p.join()
+        # return np.asarray(final_img)
+
+        ## Method 2: downsample in x,y, then in z 
+        print("Downsample in x,y...")
         z_dim = img_layer.data.shape[0]
-        zs = np.round(np.arange(0,z_dim,1/scaling[0])).astype('int')
+        zs = np.arange(z_dim)
         imgs = [img_layer.data[z] for z in zs]
         f = partial(_resample_img_slice, scaling = scaling[1:])
         p = mp.Pool(num_workers)
         final_img = list(tqdm(p.imap(f,imgs), total = len(imgs)))
         p.close()
         p.join()
+        final_img = np.asarray(final_img)
+
+        # Now downsample in z 
+        print("Downsample in z...")
+        x_dim = final_img.shape[2]
+        xs = np.arange(x_dim)
+        imgs = [final_img[:,:,x] for x in xs]
+        f = partial(_resample_img_slice, scaling = scaling[:2])
+        p = mp.Pool(num_workers)
+        final_imgs = list(tqdm(p.imap(f,imgs), total=len(imgs)))
+        p.close()
+        p.join()
+
+        final_img = np.dstack(final_imgs)
         return np.asarray(final_img)
 
 
