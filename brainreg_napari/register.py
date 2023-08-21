@@ -27,7 +27,7 @@ from napari.utils.notifications import show_info
 from brainreg_napari.util import (
     NiftyregArgs,
     downsample_and_save_brain,
-    downsample_and_brain_fast,
+    downsample_brain_fast,
     initialise_brainreg,
 )
 
