@@ -107,7 +107,7 @@ def downsample_brain_fast(img_layer, scaling, num_workers):
         x_dim = final_img.shape[2]
         xs = np.arange(x_dim)
         imgs = [final_img[:,:,x] for x in xs]
-        f = partial(_resample_img_slice, scaling = ((scaling[0],1))
+        f = partial(_resample_img_slice, scaling = (scaling[0],1))
         p = mp.Pool(num_workers)
         final_imgs = list(tqdm(p.imap(f,imgs), total=len(imgs)))
         p.close()
